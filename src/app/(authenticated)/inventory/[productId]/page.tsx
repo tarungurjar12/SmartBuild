@@ -35,7 +35,7 @@ const mockVariants: { [productId: string]: ProductVariant[] } = {
   ],
 };
 
-function VariantFormModal({ variant, productId, onSave, trigger }: { variant?: ProductVariant; productId: string; onSave: (data: any) => void; trigger: React.ReactNode }) {
+function VariantFormModal({ variant, productId, onSave, trigger }: { variant?: ProductVariant; productId: string; onSave: (data: Partial<ProductVariant> & {id?: string}) => void; trigger: React.ReactNode }) {
   const [sku, setSku] = useState(variant?.sku || "");
   const [size, setSize] = useState(variant?.size || "");
   const [variety, setVariety] = useState(variant?.variety || "");
@@ -43,12 +43,55 @@ function VariantFormModal({ variant, productId, onSave, trigger }: { variant?: P
   const [sellingPrice, setSellingPrice] = useState(variant?.sellingPrice || 0);
   const [quantityInStock, setQuantityInStock] = useState(variant?.quantityInStock || 0);
   const [lowStockThreshold, setLowStockThreshold] = useState(variant?.lowStockThreshold || 0);
+  const [averageDailySales, setAverageDailySales] = useState(variant?.averageDailySales || 0);
+  const [leadTimeDays, setLeadTimeDays] = useState(variant?.leadTimeDays || 0);
   const [imageUrl, setImageUrl] = useState(variant?.imageUrl || "https://placehold.co/400x300.png");
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    if (variant) {
+      setSku(variant.sku);
+      setSize(variant.size);
+      setVariety(variant.variety);
+      setPurchasePrice(variant.purchasePrice);
+      setSellingPrice(variant.sellingPrice);
+      setQuantityInStock(variant.quantityInStock);
+      setLowStockThreshold(variant.lowStockThreshold);
+      setAverageDailySales(variant.averageDailySales || 0);
+      setLeadTimeDays(variant.leadTimeDays || 0);
+      setImageUrl(variant.imageUrl || "https://placehold.co/400x300.png");
+    } else {
+        // Reset for new variant
+        setSku("");
+        setSize("");
+        setVariety("");
+        setPurchasePrice(0);
+        setSellingPrice(0);
+        setQuantityInStock(0);
+        setLowStockThreshold(0);
+        setAverageDailySales(0);
+        setLeadTimeDays(0);
+        setImageUrl("https://placehold.co/400x300.png");
+    }
+  }, [variant, isOpen]);
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ id: variant?.id, productId, sku, size, variety, purchasePrice, sellingPrice, quantityInStock, lowStockThreshold, imageUrl });
+    onSave({ 
+        id: variant?.id, 
+        productId, 
+        sku, 
+        size, 
+        variety, 
+        purchasePrice, 
+        sellingPrice, 
+        quantityInStock, 
+        lowStockThreshold, 
+        averageDailySales, 
+        leadTimeDays, 
+        imageUrl 
+    });
     setIsOpen(false);
   };
 
@@ -94,6 +137,16 @@ function VariantFormModal({ variant, productId, onSave, trigger }: { variant?: P
               <Input id="lowStockThreshold" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(parseInt(e.target.value))} required />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="averageDailySales">Avg. Daily Sales</Label>
+              <Input id="averageDailySales" type="number" value={averageDailySales} onChange={(e) => setAverageDailySales(parseFloat(e.target.value))} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="leadTimeDays">Lead Time (Days)</Label>
+              <Input id="leadTimeDays" type="number" value={leadTimeDays} onChange={(e) => setLeadTimeDays(parseInt(e.target.value))} />
+            </div>
+          </div>
            <div className="grid gap-2">
             <Label htmlFor="imageUrl">Image URL</Label>
             <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
@@ -126,8 +179,8 @@ function ReorderSuggestionModal({ variant, productName, onReorder }: { variant: 
         variantDetails: `${variant.size}, ${variant.variety}`,
         quantityInStock: variant.quantityInStock,
         lowStockThreshold: variant.lowStockThreshold,
-        averageDailySales: variant.averageDailySales || 0, // Fallback if not available
-        leadTimeDays: variant.leadTimeDays || 0, // Fallback if not available
+        averageDailySales: variant.averageDailySales || 0,
+        leadTimeDays: variant.leadTimeDays || 0,
       };
       const result = await getReorderSuggestions(input);
       setSuggestion(result);
@@ -138,11 +191,19 @@ function ReorderSuggestionModal({ variant, productName, onReorder }: { variant: 
       setIsLoading(false);
     }
   };
+  
+  useEffect(() => {
+    if (isOpen && !suggestion && !isLoading) {
+      handleGetSuggestion();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" onClick={() => { setIsOpen(true); handleGetSuggestion(); }}>
+        <Button variant="outline" size="sm" >
           <Lightbulb className="mr-2 h-4 w-4" /> AI Suggestion
         </Button>
       </DialogTrigger>
@@ -160,7 +221,7 @@ function ReorderSuggestionModal({ variant, productName, onReorder }: { variant: 
             <p><strong>Reasoning:</strong> {suggestion.reasoning}</p>
           </div>
         )}
-        {!suggestion && !isLoading && <div className="py-4 text-center">Click "Get Suggestion" or no suggestion available. Ensure Average Daily Sales and Lead Time are set for the variant.</div>}
+        {!suggestion && !isLoading && <div className="py-4 text-center">No suggestion available or average daily sales/lead time not set.</div>}
         <DialogFooter className="sm:justify-between">
           <Button type="button" variant="ghost" onClick={handleGetSuggestion} disabled={isLoading}>
             {isLoading ? "Fetching..." : "Refresh Suggestion"}
@@ -186,41 +247,50 @@ export default function ProductDetailPage() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
 
   useEffect(() => {
-    // Simulate fetching data
     const foundProduct = mockProducts.find(p => p.id === productId);
     if (foundProduct) {
       setProduct(foundProduct);
       setVariants(mockVariants[productId] || []);
     } else {
-      // router.push('/inventory'); // Redirect if product not found
+      // Consider redirecting if product not found, or showing a "not found" message
+      // router.push('/inventory'); 
+      toast({ title: "Product not found", variant: "destructive"});
     }
-  }, [productId, router]);
+  }, [productId, toast]);
 
-  const handleSaveVariant = (data: any) => {
+  const handleSaveVariant = (data: Partial<ProductVariant> & {id?: string}) => {
     if (data.id) { // Edit
-      setVariants(variants.map(v => v.id === data.id ? { ...v, ...data } : v));
+      setVariants(variants.map(v => v.id === data.id ? { ...v, ...data } as ProductVariant : v));
+      toast({ title: "Success", description: `Variant updated successfully.` });
     } else { // Add
-      const newVariant = { ...data, id: `var_${productId}_${Date.now()}` };
+      const newVariant = { 
+        ...data, 
+        id: `var_${productId}_${Date.now()}`,
+        productId: productId,
+      } as ProductVariant;
       setVariants([newVariant, ...variants]);
+      toast({ title: "Success", description: `Variant added successfully.` });
     }
-    toast({ title: "Success", description: `Variant ${data.id ? 'updated' : 'added'} successfully.` });
+    // In a real app, you'd save this to your backend (e.g., Firestore)
+    // For mock data, updating mockVariants might be needed if you navigate away and back
+    // Or manage this in a global state / context
   };
   
   const handleDeleteVariant = (variantId: string) => {
+    // Add confirmation dialog here if desired
     setVariants(variants.filter(v => v.id !== variantId));
-    toast({ title: "Success", description: "Variant deleted successfully." });
+    toast({ title: "Success", description: "Variant deleted successfully.", variant: "destructive" });
   };
 
   const handleCreateReorder = (quantity: number) => {
-    // Placeholder for creating a reorder/purchase order
-    toast({ title: "Reorder Initiated", description: `Reorder for ${quantity} units has been initiated.` });
+    toast({ title: "Reorder Initiated", description: `Reorder for ${quantity} units has been initiated (mock action).` });
   };
 
   if (!product) {
     return (
       <>
         <AppHeader />
-        <div className="p-6 text-center">Loading product details...</div>
+        <div className="p-6 text-center">Loading product details or product not found...</div>
       </>
     );
   }
@@ -284,7 +354,7 @@ export default function ProductDetailPage() {
                         {variant.quantityInStock}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right space-x-2">
+                    <TableCell className="text-right space-x-1">
                        <ReorderSuggestionModal variant={variant} productName={product.name} onReorder={handleCreateReorder} />
                        <VariantFormModal
                         variant={variant}
@@ -304,7 +374,7 @@ export default function ProductDetailPage() {
                 )) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                      No variants found for this product.
+                      No variants found for this product. Add one to get started.
                     </TableCell>
                   </TableRow>
                 )}

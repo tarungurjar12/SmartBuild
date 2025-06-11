@@ -1,4 +1,5 @@
 
+
 // Assuming Firebase Timestamp, adjust if using native Date
 // For simplicity, using Date for createdAt/updatedAt in interfaces,
 // but they would typically be Firebase Timestamps when interacting with Firestore.
@@ -38,6 +39,7 @@ export interface Supplier {
   email: string;
   address: string;
   createdAt: Date;
+  updatedAt?: Date; // Added for consistency
 }
 
 export interface InvoiceItem {
@@ -66,6 +68,7 @@ export interface Invoice {
   grandTotal: number;
   status: "Paid" | "Unpaid" | "Cancelled";
   createdAt: Date;
+  updatedAt?: Date; // Added for consistency
   createdBy: string; // User ID of the staff/admin
 }
 
