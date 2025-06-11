@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePickerWithRange } from "@/components/shared/DatePickerWithRange"; // Assuming this component exists or will be created
+import { DatePickerWithRange } from "@/components/shared/DatePickerWithRange";
 import { DateRange } from "react-day-picker";
 
 // Mock data
@@ -94,7 +94,6 @@ export default function InvoicesPage() {
                         </div>
                         <div className="grid gap-2">
                            <Label>Date Range</Label>
-                           {/* Replace with your DatePickerWithRange component */}
                            <DatePickerWithRange date={dateRange} onDateChange={setDateRange} />
                         </div>
                       </div>
@@ -166,37 +165,5 @@ export default function InvoicesPage() {
         </Card>
       </div>
     </>
-  );
-}
-
-// Minimal DatePickerWithRange for placeholder
-function DatePickerWithRange({ date, onDateChange }: { date?: DateRange, onDateChange: (date?: DateRange) => void }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={`w-full justify-start text-left font-normal ${!date && "text-muted-foreground"}`}
-        >
-          {date?.from ? (
-            date.to ? (
-              <>
-                {new Date(date.from).toLocaleDateString()} - {new Date(date.to).toLocaleDateString()}
-              </>
-            ) : (
-              new Date(date.from).toLocaleDateString()
-            )
-          ) : (
-            <span>Pick a date range</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        {/* Actual react-day-picker Calendar would go here. This is a simplified placeholder. */}
-        <div className="p-4">Select date range (Calendar placeholder)</div>
-        <Button onClick={() => onDateChange({from: new Date(), to: new Date()})} className="m-2">Set Example</Button>
-        <Button variant="ghost" onClick={() => onDateChange(undefined)} className="m-2">Clear</Button>
-      </PopoverContent>
-    </Popover>
   );
 }
