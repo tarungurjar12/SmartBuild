@@ -64,7 +64,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref legacyBehavior>
+                <Link href={item.href}>
                   <SidebarMenuButton
                     isActive={pathname.startsWith(item.href)}
                     tooltip={{ children: item.label }}
@@ -98,3 +98,4 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
