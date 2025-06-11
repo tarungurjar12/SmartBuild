@@ -140,7 +140,6 @@ export default function InventoryPage() {
   };
   
   const handleDeleteProduct = (productId: string) => {
-    // Add confirmation dialog before deleting
     const productToDelete = products.find(p => p.id === productId);
     setProducts(products.filter(p => p.id !== productId));
     toast({ title: "Product Deleted", description: `${productToDelete?.name} has been deleted.`, variant: "destructive" });
@@ -230,7 +229,7 @@ export default function InventoryPage() {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
                             <Link href={`/inventory/${product.id}`} className="flex items-center w-full cursor-pointer">
-                              <Edit3 className="mr-2 h-4 w-4" /> View/Edit Variants
+                              <Search className="mr-2 h-4 w-4" /> View/Edit Variants
                             </Link>
                           </DropdownMenuItem>
                            <DropdownMenuItem
@@ -265,7 +264,7 @@ export default function InventoryPage() {
 
       {editingProduct && (
         <Dialog open={!!editingProduct} onOpenChange={(open) => { if(!open) setEditingProduct(null); }}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg" key={editingProduct.id}>
             <ProductFormFields
               product={editingProduct}
               suppliers={mockSuppliers}
@@ -278,5 +277,3 @@ export default function InventoryPage() {
     </>
   );
 }
-
-    
